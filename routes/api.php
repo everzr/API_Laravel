@@ -8,6 +8,12 @@ use App\Http\Controllers\AdirController;
 use App\Http\Controllers\PacienteController;
 use App\Http\Controllers\UserController;
 
+
+// Responde automáticamente a peticiones preflight (OPTIONS)
+Route::options('{any}', function () {
+    return response()->json([], 204);
+})->where('any', '.*');
+
 Route::prefix('admin')->group(function () {
     // Rutas para usuarios (sin token)
     Route::get('usuarios', [AdminController::class, 'usuariosIndex']);
@@ -157,8 +163,4 @@ Route::prefix('users')->group(function () {
     Route::post('recuperar-contrasena', [UserController::class, 'recuperarContrasena']);
 });
 
-// Responde automáticamente a peticiones preflight (OPTIONS)
-Route::options('{any}', function () {
-    return response()->json([], 204);
-})->where('any', '.*');
 

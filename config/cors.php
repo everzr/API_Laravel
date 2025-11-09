@@ -1,19 +1,25 @@
 <?php
 
 return [
-'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
-'allowed_methods' => ['*'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
-'allowed_origins' => ['https://frontendtea-production.up.railway.app'],
+    'allowed_methods' => ['*'],
 
-'allowed_origins_patterns' => [],
+    'allowed_origins' => [
+        'https://frontendtea-production.up.railway.app',
+        'https://frontend-tea.onrender.com',
+        'http://localhost:5173',
+    ],
 
-'allowed_headers' => ['*'],
+    'allowed_origins_patterns' => [],
 
-'exposed_headers' => [],
+    'allowed_headers' => ['*'],
 
-'max_age' => 0,
+    'exposed_headers' => [],
 
-'supports_credentials' => false,
+    'max_age' => 0,
+
+    'supports_credentials' => false,
+
 ];
