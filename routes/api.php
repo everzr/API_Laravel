@@ -138,7 +138,7 @@ Route::prefix('ados')->group(function () {
 });
 
 // Rutas Paciente (sin token)
-Route::prefix('paciente')->group(function () {
+Route::prefix('pacientes')->group(function () {
     Route::get('buscar-paciente/{id_usuario}', [PacienteController::class, 'buscarPacientePorUsuario']);
     Route::post('aceptar-consentimiento', [PacienteController::class, 'aceptarConsentimiento']);
     Route::post('guardar-dsm5', [PacienteController::class, 'guardarDsm5']);
