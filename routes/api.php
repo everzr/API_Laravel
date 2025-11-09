@@ -111,21 +111,16 @@ Route::prefix('adir')->group(function () {
 
 // Rutas ADOS (añadidas todas las del controlador Node, sin token)
 Route::prefix('ados')->group(function () {
-    Route::get('pacientes', [AdosController::class, 'listarPacientesConAdos']);
-    Route::get('tests/{id_paciente}', [AdosController::class, 'listarTestsAdosPorPaciente']);
     Route::get('actividades/{modulo}', [AdosController::class, 'actividadesPorModulo']);
-    Route::post('crear', [AdosController::class, 'crearTest']);
-    Route::post('actividad-realizada', [AdosController::class, 'guardarActividadRealizada']);
-    Route::put('pausar/{id_ados}', [AdosController::class, 'pausarTest']);
-    Route::get('test-pausado', [AdosController::class, 'buscarTestPausado']);
     Route::get('actividades-realizadas/{id_ados}', [AdosController::class, 'actividadesRealizadas']);
+    Route::post('crear', [AdosController::class, 'crearTest']);
+    Route::put('pausar/{id_ados}', [AdosController::class, 'pausarTest']);
+    Route::post('actividad-realizada', [AdosController::class, 'guardarActividadRealizada']);
+    Route::get('test-pausado', [AdosController::class, 'buscarTestPausado']);
     Route::post('responder-item', [AdosController::class, 'responderItem']);
-    Route::get('codificaciones-algoritmo/{id_algoritmo}', [AdosController::class, 'codificacionesPorAlgoritmo']);
-    Route::get('puntuaciones-codificacion/{id_codificacion}', [AdosController::class, 'puntuacionesPorCodificacion']);
     Route::post('responder-codificacion', [AdosController::class, 'responderCodificacion']);
-    Route::get('paciente/{id_paciente}', [AdosController::class, 'obtenerPacientePorId']);
-    Route::get('codificacion/{id_codificacion}', [AdosController::class, 'codificacionPorId']);
-    Route::get('algoritmo/{id_algoritmo}', [AdosController::class, 'obtenerAlgoritmoPorId']);
+    Route::get('puntuaciones-codificacion/{id_codificacion}', [AdosController::class, 'puntuacionesPorCodificacion']);
+    Route::get('codificaciones-algoritmo/{id_algoritmo}', [AdosController::class, 'codificacionesPorAlgoritmo']);
     Route::get('respuestas-algoritmo/{id_ados}', [AdosController::class, 'respuestasAlgoritmo']);
     Route::get('test/{id_ados}', [AdosController::class, 'obtenerTestPorId']);
     Route::get('algoritmo-por-test/{id_ados}', [AdosController::class, 'obtenerAlgoritmoPorTest']);
@@ -140,7 +135,6 @@ Route::prefix('ados')->group(function () {
     Route::get('reporte-modulo-2/{id_ados}', [AdosController::class, 'obtenerDatosReporteModulo2']);
     Route::get('reporte-modulo-3/{id_ados}', [AdosController::class, 'obtenerDatosReporteModulo3']);
     Route::get('reporte-modulo-4/{id_ados}', [AdosController::class, 'obtenerDatosReporteModulo4']);
-    Route::get('validar-filtros/{id_paciente}', [AdosController::class, 'validarFiltrosPaciente']);
 });
 
 // Rutas Paciente (sin token)
