@@ -156,3 +156,9 @@ Route::prefix('users')->group(function () {
     Route::put('cambiar-password', [UserController::class, 'cambiarPasswordConActual']);
     Route::post('recuperar-contrasena', [UserController::class, 'recuperarContrasena']);
 });
+
+// Responde automáticamente a peticiones preflight (OPTIONS)
+Route::options('{any}', function () {
+    return response()->json([], 204);
+})->where('any', '.*');
+
