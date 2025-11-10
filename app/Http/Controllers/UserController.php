@@ -88,9 +88,18 @@ class UserController extends Controller
             'fecha_nacimiento' => 'nullable|date',
             'sexo' => 'nullable|string|in:M,F',
             'especialidad' => 'nullable|string',
+
+            // Responsables legales (opcional, cuando privilegio=1)
+            'responsables_legales' => 'sometimes|array|min:1',
+            'responsables_legales.*.nombre' => 'required_with:responsables_legales|string|max:50',
+            'responsables_legales.*.apellido' => 'required_with:responsables_legales|string|max:50',
+            'responsables_legales.*.num_identificacion' => 'required_with:responsables_legales|string|max:50',
+            'responsables_legales.*.parentesco' => 'required_with:responsables_legales|string|max:50',
+            'responsables_legales.*.telefono' => 'nullable|string|max:30',
+            'responsables_legales.*.direccion' => 'nullable|string|max:200',
+            'responsables_legales.*.correo' => 'nullable|email|max:50',
         ]);
 
-        // Reglas condicionales
         if ((int) $data['privilegio'] === 1) {
             if (empty($data['fecha_nacimiento']) || empty($data['sexo'])) {
                 return response()->json(['message' => 'Fecha de nacimiento y sexo son requeridos para paciente.'], 400);
@@ -106,6 +115,8 @@ class UserController extends Controller
         $hash = Hash::make($contrasenaGenerica);
 
         try {
+            DB::beginTransaction();
+
             $id_usuario = DB::table('usuario')->insertGetId([
                 'nombres' => $data['nombres'],
                 'apellidos' => $data['apellidos'],
@@ -118,30 +129,49 @@ class UserController extends Controller
                 'estado' => 1,
                 'requiere_cambio_contrasena' => 1,
             ]);
-        } catch (\Illuminate\Database\QueryException $e) {
-            // MySQL duplicate entry
-            if (($e->errorInfo[1] ?? null) === 1062) {
-                return response()->json(['message' => 'El correo ya está registrado'], 409);
-            }
-            return response()->json(['message' => 'Error en el servidor'], 500);
-        }
 
-        try {
+            $id_paciente = null;
+
             if ((int) $data['privilegio'] === 1) {
-                DB::table('paciente')->insert([
+                $id_paciente = DB::table('paciente')->insertGetId([
                     'id_usuario' => $id_usuario,
                     'fecha_nacimiento' => $data['fecha_nacimiento'],
                     'sexo' => $data['sexo'],
                 ]);
+
+                if (!empty($data['responsables_legales'])) {
+                    $rows = [];
+                    foreach ($data['responsables_legales'] as $r) {
+                        $rows[] = [
+                            'id_paciente' => $id_paciente,
+                            'nombre' => $r['nombre'],
+                            'apellido' => $r['apellido'],
+                            'num_identificacion' => $r['num_identificacion'],
+                            'parentesco' => $r['parentesco'],
+                            'telefono' => $r['telefono'] ?? null,
+                            'direccion' => $r['direccion'] ?? null,
+                            'correo' => $r['correo'] ?? null,
+                        ];
+                    }
+                    DB::table('responsable_legal')->insert($rows);
+                }
             } else {
                 DB::table('especialista')->insert([
                     'id_usuario' => $id_usuario,
                     'especialidad' => $data['especialidad'],
                 ]);
             }
+
+            DB::commit();
+        } catch (\Illuminate\Database\QueryException $e) {
+            DB::rollBack();
+            if (($e->errorInfo[1] ?? null) === 1062) {
+                return response()->json(['message' => 'El correo ya está registrado'], 409);
+            }
+            return response()->json(['message' => 'Error en el servidor'], 500);
         } catch (\Throwable $e) {
-            // revert basic user? (opcional)
-            Log::error('Error registrando perfil: ' . $e->getMessage());
+            DB::rollBack();
+            Log::error('Error registrando perfil/resp: ' . $e->getMessage());
             return response()->json(['message' => 'Error al registrar perfil'], 500);
         }
 
@@ -149,7 +179,8 @@ class UserController extends Controller
 
         return response()->json([
             'message' => (int) $data['privilegio'] === 1 ? 'Paciente registrado exitosamente' : 'Especialista registrado exitosamente',
-            'userId' => (int) $id_usuario
+            'userId' => (int) $id_usuario,
+            'id_paciente' => $id_paciente
         ], 201);
     }
 

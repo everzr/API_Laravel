@@ -537,4 +537,90 @@ Equipo TEA Diagnóstico
             // silencioso
         }
     }
+
+    // GET /api/ados/pacientes
+    public function listarPacientesConAdos()
+    {
+        $rows = DB::select("
+            SELECT p.id_paciente, u.nombres, u.apellidos, p.sexo, p.fecha_nacimiento
+            FROM paciente p
+            JOIN usuario u ON p.id_usuario = u.id_usuario
+            ORDER BY u.apellidos, u.nombres
+        ");
+        return response()->json($rows);
+    }
+
+    // GET /api/ados/tests/{id_paciente}
+    public function listarTestsAdosPorPaciente($id_paciente)
+    {
+        $rows = DB::select("
+            SELECT t.id_ados, t.fecha, t.modulo, t.diagnostico, t.total_punto, t.clasificacion,
+                   t.puntuacion_comparativa, t.estado, t.id_paciente
+            FROM test_ados_2 t
+            WHERE t.id_paciente = ?
+            ORDER BY t.fecha DESC
+        ", [$id_paciente]);
+
+        return response()->json($rows);
+    }
+
+    // GET /api/ados/validar-filtros/{id_paciente}
+    public function validarFiltrosPaciente($id_paciente)
+    {
+        $row = DB::selectOne("
+            SELECT terminos_privacida, filtro_dsm_5
+            FROM paciente
+            WHERE id_paciente = ?
+        ", [$id_paciente]);
+
+        if (!$row) {
+            return response()->json(['message' => 'Paciente no encontrado.'], 404);
+        }
+
+        $permitido = ((int)($row->terminos_privacida ?? 0) === 1) && ((int)($row->filtro_dsm_5 ?? 0) === 1);
+        if (!$permitido) {
+            return response()->json([
+                'permitido' => false,
+                'message' => 'El paciente no ha aceptado los términos de privacidad o no cumple el filtro DSM-5.'
+            ], 200);
+        }
+
+        return response()->json(['permitido' => true], 200);
+    }
+
+    // GET /api/ados/paciente/{id_paciente}
+    public function paciente($id_paciente)
+    {
+        $row = DB::selectOne("SELECT * FROM paciente WHERE id_paciente = ?", [$id_paciente]);
+        if (!$row) {
+            return response()->json(['message' => 'Paciente no encontrado.'], 404);
+        }
+        return response()->json($row);
+    }
+
+    // GET /api/ados/codificacion/{id_codificacion}
+    public function codificacion($id_codificacion)
+    {
+        $row = DB::selectOne("SELECT * FROM codificacion WHERE id_codificacion = ?", [$id_codificacion]);
+        if (!$row) {
+            return response()->json(['message' => 'Codificación no encontrada.'], 404);
+        }
+        return response()->json($row);
+    }
+
+    // GET /api/ados/algoritmo/{id_algoritmo}
+    public function obtenerAlgoritmoPorId($id_algoritmo)
+    {
+        $row = DB::selectOne("SELECT * FROM algoritmo WHERE id_algoritmo = ?", [$id_algoritmo]);
+        if (!$row) {
+            return response()->json(['message' => 'Algoritmo no encontrado.'], 404);
+        }
+        return response()->json($row);
+    }
+
+    // Alias para compatibilidad con rutas antiguas
+    public function puntuacionesCodificacion($id)
+    {
+        return $this->puntuacionesPorCodificacion($id);
+    }
 }
