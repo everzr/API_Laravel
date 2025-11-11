@@ -7,6 +7,7 @@ use App\Http\Controllers\AdosController;
 use App\Http\Controllers\AdirController;
 use App\Http\Controllers\PacienteController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\EstadisticaController;
 
 Route::prefix('admin')->group(function () {
     // Rutas para usuarios (sin token)
@@ -155,4 +156,21 @@ Route::prefix('users')->group(function () {
     Route::get('pacientes', [UserController::class, 'listarPacientes']);
     Route::put('cambiar-password', [UserController::class, 'cambiarPasswordConActual']);
     Route::post('recuperar-contrasena', [UserController::class, 'recuperarContrasena']);
+});
+
+// Estadísticas (ADMIN)
+Route::prefix('admin/estadisticas')->group(function () {
+    Route::get('usuarios', [EstadisticaController::class, 'usuarios']);              // total por tipo y estado
+    Route::get('especialistas', [EstadisticaController::class, 'especialistas']);  // totales y ranking por casos atendidos
+    Route::get('pacientes', [EstadisticaController::class, 'pacientes']);          // totales, distribución sexo/edad, DSM-5
+    Route::get('evaluaciones', [EstadisticaController::class, 'evaluaciones']);    // totales ADOS/ADIR y por módulo
+});
+
+// Estadísticas (ESPECIALISTA)
+Route::prefix('especialista/estadisticas')->group(function () {
+    // {id_especialista} en path
+    Route::get('pacientes/{id_especialista}', [EstadisticaController::class, 'pacientesEspecialista']);
+    Route::get('evaluaciones/{id_especialista}', [EstadisticaController::class, 'evaluacionesEspecialista']);
+    Route::get('diagnosticos/{id_especialista}', [EstadisticaController::class, 'diagnosticosEspecialista']);
+    Route::get('actividades/{id_especialista}', [EstadisticaController::class, 'actividadesEspecialista']);
 });
