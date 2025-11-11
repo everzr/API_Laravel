@@ -7,6 +7,7 @@ use App\Http\Controllers\AdosController;
 use App\Http\Controllers\AdirController;
 use App\Http\Controllers\PacienteController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\EstadisticaController;
 
 
 // Responde automáticamente a peticiones preflight (OPTIONS)
