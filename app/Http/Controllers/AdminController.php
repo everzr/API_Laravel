@@ -13,6 +13,7 @@ use App\Models\TestAdir;
 use App\Models\TestAdos; // <-- agregado
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
@@ -28,15 +29,15 @@ class AdminController extends Controller
     public function usuariosStore(Request $request)
     {
         $data = $request->validate([
-            'nombres'    => 'required|string|max:255',
-            'apellidos'  => 'nullable|string|max:255',
-            'direccion'  => 'nullable|string|max:500',
-            'telefono'   => 'nullable|string|max:50',
-            'correo'     => 'required|email|unique:usuarios,correo',
+            'nombres' => 'required|string|max:255',
+            'apellidos' => 'nullable|string|max:255',
+            'direccion' => 'nullable|string|max:500',
+            'telefono' => 'nullable|string|max:50',
+            'correo' => 'required|email|unique:usuarios,correo',
             'contrasena' => 'required|string|min:6',
             'privilegio' => 'nullable|integer',
-            'imagen'     => 'nullable|string',
-            'estado'     => 'nullable|integer',
+            'imagen' => 'nullable|string',
+            'estado' => 'nullable|integer',
         ]);
 
         $data['contrasena'] = Hash::make($data['contrasena']);
@@ -50,20 +51,20 @@ class AdminController extends Controller
     public function usuariosUpdate(Request $request, $id)
     {
         $usuario = Usuario::where('id_usuario', $id)->first();
-        if (! $usuario) {
+        if (!$usuario) {
             return response()->json(['message' => 'Usuario no encontrado'], 404);
         }
 
         $data = $request->validate([
-            'nombres'    => 'sometimes|required|string|max:255',
-            'apellidos'  => 'sometimes|nullable|string|max:255',
-            'direccion'  => 'sometimes|nullable|string|max:500',
-            'telefono'   => 'sometimes|nullable|string|max:50',
-            'correo'     => ['sometimes','required','email', Rule::unique('usuarios','correo')->ignore($usuario->id_usuario ?? $usuario->id, 'id_usuario')],
+            'nombres' => 'sometimes|required|string|max:255',
+            'apellidos' => 'sometimes|nullable|string|max:255',
+            'direccion' => 'sometimes|nullable|string|max:500',
+            'telefono' => 'sometimes|nullable|string|max:50',
+            'correo' => ['sometimes', 'required', 'email', Rule::unique('usuarios', 'correo')->ignore($usuario->id_usuario ?? $usuario->id, 'id_usuario')],
             'contrasena' => 'sometimes|nullable|string|min:6',
             'privilegio' => 'sometimes|nullable|integer',
-            'imagen'     => 'sometimes|nullable|string',
-            'estado'     => 'sometimes|nullable|integer',
+            'imagen' => 'sometimes|nullable|string',
+            'estado' => 'sometimes|nullable|integer',
         ]);
 
         if (!empty($data['contrasena'])) {
@@ -81,7 +82,7 @@ class AdminController extends Controller
     public function usuariosDestroy($id)
     {
         $usuario = Usuario::where('id_usuario', $id)->first();
-        if (! $usuario) {
+        if (!$usuario) {
             return response()->json(['message' => 'Usuario no encontrado'], 404);
         }
 
@@ -102,10 +103,10 @@ class AdminController extends Controller
     public function actividadesStore(Request $request)
     {
         $data = $request->validate([
-            'id_ados'            => 'nullable|integer',
-            'nombre_actividad'   => 'required|string|max:255',
-            'observacion'        => 'nullable|string',
-            'puntuacion'         => 'nullable|numeric',
+            'id_ados' => 'nullable|integer',
+            'nombre_actividad' => 'required|string|max:255',
+            'observacion' => 'nullable|string',
+            'puntuacion' => 'nullable|numeric',
         ]);
 
         $actividad = Actividad::create($data);
@@ -117,15 +118,15 @@ class AdminController extends Controller
     public function actividadesUpdate(Request $request, $id)
     {
         $actividad = Actividad::where('id_actividad', $id)->first();
-        if (! $actividad) {
+        if (!$actividad) {
             return response()->json(['message' => 'Actividad no encontrada'], 404);
         }
 
         $data = $request->validate([
-            'id_ados'            => 'sometimes|nullable|integer',
-            'nombre_actividad'   => 'sometimes|required|string|max:255',
-            'observacion'        => 'sometimes|nullable|string',
-            'puntuacion'         => 'sometimes|nullable|numeric',
+            'id_ados' => 'sometimes|nullable|integer',
+            'nombre_actividad' => 'sometimes|required|string|max:255',
+            'observacion' => 'sometimes|nullable|string',
+            'puntuacion' => 'sometimes|nullable|numeric',
         ]);
 
         $actividad->update($data);
@@ -137,7 +138,7 @@ class AdminController extends Controller
     public function actividadesDestroy($id)
     {
         $actividad = Actividad::where('id_actividad', $id)->first();
-        if (! $actividad) {
+        if (!$actividad) {
             return response()->json(['message' => 'Actividad no encontrada'], 404);
         }
 
@@ -170,7 +171,7 @@ class AdminController extends Controller
     public function areasUpdate(Request $request, $id)
     {
         $area = Area::where('id_area', $id)->first();
-        if (! $area) {
+        if (!$area) {
             return response()->json(['message' => 'Área no encontrada'], 404);
         }
 
@@ -187,7 +188,7 @@ class AdminController extends Controller
     public function areasDestroy($id)
     {
         $area = Area::where('id_area', $id)->first();
-        if (! $area) {
+        if (!$area) {
             return response()->json(['message' => 'Área no encontrada'], 404);
         }
 
@@ -208,8 +209,8 @@ class AdminController extends Controller
     public function especialistasStore(Request $request)
     {
         $data = $request->validate([
-            'id_usuario'  => 'required|integer|exists:usuarios,id_usuario',
-            'especialidad'=> 'required|string|max:255',
+            'id_usuario' => 'required|integer|exists:usuarios,id_usuario',
+            'especialidad' => 'required|string|max:255',
         ]);
 
         $especialista = Especialista::create($data);
@@ -221,13 +222,13 @@ class AdminController extends Controller
     public function especialistasUpdate(Request $request, $id)
     {
         $especialista = Especialista::where('id_especialista', $id)->first();
-        if (! $especialista) {
+        if (!$especialista) {
             return response()->json(['message' => 'Especialista no encontrado'], 404);
         }
 
         $data = $request->validate([
-            'id_usuario'  => 'sometimes|required|integer|exists:usuarios,id_usuario',
-            'especialidad'=> 'sometimes|required|string|max:255',
+            'id_usuario' => 'sometimes|required|integer|exists:usuarios,id_usuario',
+            'especialidad' => 'sometimes|required|string|max:255',
         ]);
 
         $especialista->update($data);
@@ -239,7 +240,7 @@ class AdminController extends Controller
     public function especialistasDestroy($id)
     {
         $especialista = Especialista::where('id_especialista', $id)->first();
-        if (! $especialista) {
+        if (!$especialista) {
             return response()->json(['message' => 'Especialista no encontrado'], 404);
         }
 
@@ -260,9 +261,9 @@ class AdminController extends Controller
     public function pacientesStore(Request $request)
     {
         $data = $request->validate([
-            'id_usuario'       => 'required|integer|exists:usuarios,id_usuario',
+            'id_usuario' => 'required|integer|exists:usuarios,id_usuario',
             'fecha_nacimiento' => 'required|date',
-            'sexo'             => 'required|in:M,F',
+            'sexo' => 'required|in:M,F',
         ]);
 
         $paciente = Paciente::create($data);
@@ -274,14 +275,14 @@ class AdminController extends Controller
     public function pacientesUpdate(Request $request, $id)
     {
         $paciente = Paciente::where('id_paciente', $id)->first();
-        if (! $paciente) {
+        if (!$paciente) {
             return response()->json(['message' => 'Paciente no encontrado'], 404);
         }
 
         $data = $request->validate([
-            'id_usuario'       => 'sometimes|required|integer|exists:usuarios,id_usuario',
+            'id_usuario' => 'sometimes|required|integer|exists:usuarios,id_usuario',
             'fecha_nacimiento' => 'sometimes|required|date',
-            'sexo'             => 'sometimes|required|in:M,F',
+            'sexo' => 'sometimes|required|in:M,F',
         ]);
 
         $paciente->update($data);
@@ -293,7 +294,7 @@ class AdminController extends Controller
     public function pacientesDestroy($id)
     {
         $paciente = Paciente::where('id_paciente', $id)->first();
-        if (! $paciente) {
+        if (!$paciente) {
             return response()->json(['message' => 'Paciente no encontrado'], 404);
         }
 
@@ -315,7 +316,7 @@ class AdminController extends Controller
     {
         $data = $request->validate([
             'pregunta' => 'required|string|max:1000',
-            'id_area'  => 'required|integer|exists:areas,id_area',
+            'id_area' => 'required|integer|exists:areas,id_area',
         ]);
 
         $pregunta = PreguntaAdi::create($data);
@@ -327,13 +328,13 @@ class AdminController extends Controller
     public function preguntasUpdate(Request $request, $id)
     {
         $pregunta = PreguntaAdi::where('id_pregunta', $id)->first();
-        if (! $pregunta) {
+        if (!$pregunta) {
             return response()->json(['message' => 'Pregunta no encontrada'], 404);
         }
 
         $data = $request->validate([
             'pregunta' => 'sometimes|required|string|max:1000',
-            'id_area'  => 'sometimes|required|integer|exists:areas,id_area',
+            'id_area' => 'sometimes|required|integer|exists:areas,id_area',
         ]);
 
         $pregunta->update($data);
@@ -345,7 +346,7 @@ class AdminController extends Controller
     public function preguntasDestroy($id)
     {
         $pregunta = PreguntaAdi::where('id_pregunta', $id)->first();
-        if (! $pregunta) {
+        if (!$pregunta) {
             return response()->json(['message' => 'Pregunta no encontrada'], 404);
         }
 
@@ -366,10 +367,10 @@ class AdminController extends Controller
     public function testsAdirStore(Request $request)
     {
         $data = $request->validate([
-            'id_paciente'    => 'required|integer|exists:pacientes,id_paciente',
-            'id_especialista'=> 'required|integer|exists:especialistas,id_especialista',
-            'fecha'          => 'required|date',
-            'diagnostico'    => 'nullable|string',
+            'id_paciente' => 'required|integer|exists:pacientes,id_paciente',
+            'id_especialista' => 'required|integer|exists:especialistas,id_especialista',
+            'fecha' => 'required|date',
+            'diagnostico' => 'nullable|string',
         ]);
 
         $test = TestAdir::create($data);
@@ -381,15 +382,15 @@ class AdminController extends Controller
     public function testsAdirUpdate(Request $request, $id)
     {
         $test = TestAdir::where('id_adir', $id)->first();
-        if (! $test) {
+        if (!$test) {
             return response()->json(['message' => 'Test no encontrado'], 404);
         }
 
         $data = $request->validate([
-            'id_paciente'    => 'sometimes|required|integer|exists:pacientes,id_paciente',
-            'id_especialista'=> 'sometimes|required|integer|exists:especialistas,id_especialista',
-            'fecha'          => 'sometimes|required|date',
-            'diagnostico'    => 'sometimes|nullable|string',
+            'id_paciente' => 'sometimes|required|integer|exists:pacientes,id_paciente',
+            'id_especialista' => 'sometimes|required|integer|exists:especialistas,id_especialista',
+            'fecha' => 'sometimes|required|date',
+            'diagnostico' => 'sometimes|nullable|string',
         ]);
 
         $test->update($data);
@@ -401,7 +402,7 @@ class AdminController extends Controller
     public function testsAdirDestroy($id)
     {
         $test = TestAdir::where('id_adir', $id)->first();
-        if (! $test) {
+        if (!$test) {
             return response()->json(['message' => 'Test no encontrado'], 404);
         }
 
@@ -422,12 +423,12 @@ class AdminController extends Controller
     public function testsAdosStore(Request $request)
     {
         $data = $request->validate([
-            'id_paciente'    => 'required|integer|exists:pacientes,id_paciente',
-            'fecha'          => 'required|date',
-            'modulo'         => 'required|string|max:255',
-            'id_especialista'=> 'required|integer|exists:especialistas,id_especialista',
-            'diagnostico'    => 'nullable|string',
-            'total_punto'    => 'nullable|numeric',
+            'id_paciente' => 'required|integer|exists:pacientes,id_paciente',
+            'fecha' => 'required|date',
+            'modulo' => 'required|string|max:255',
+            'id_especialista' => 'required|integer|exists:especialistas,id_especialista',
+            'diagnostico' => 'nullable|string',
+            'total_punto' => 'nullable|numeric',
         ]);
 
         $test = TestAdos::create($data);
@@ -439,17 +440,17 @@ class AdminController extends Controller
     public function testsAdosUpdate(Request $request, $id)
     {
         $test = TestAdos::where('id_ados', $id)->first();
-        if (! $test) {
+        if (!$test) {
             return response()->json(['message' => 'Test no encontrado'], 404);
         }
 
         $data = $request->validate([
-            'id_paciente'    => 'sometimes|required|integer|exists:pacientes,id_paciente',
-            'fecha'          => 'sometimes|required|date',
-            'modulo'         => 'sometimes|required|string|max:255',
-            'id_especialista'=> 'sometimes|required|integer|exists:especialistas,id_especialista',
-            'diagnostico'    => 'sometimes|nullable|string',
-            'total_punto'    => 'sometimes|nullable|numeric',
+            'id_paciente' => 'sometimes|required|integer|exists:pacientes,id_paciente',
+            'fecha' => 'sometimes|required|date',
+            'modulo' => 'sometimes|required|string|max:255',
+            'id_especialista' => 'sometimes|required|integer|exists:especialistas,id_especialista',
+            'diagnostico' => 'sometimes|nullable|string',
+            'total_punto' => 'sometimes|nullable|numeric',
         ]);
 
         $test->update($data);
@@ -461,12 +462,145 @@ class AdminController extends Controller
     public function testsAdosDestroy($id)
     {
         $test = TestAdos::where('id_ados', $id)->first();
-        if (! $test) {
+        if (!$test) {
             return response()->json(['message' => 'Test no encontrado'], 404);
         }
 
         $test->delete();
 
         return response()->json(['message' => 'Test eliminado']);
+    }
+
+    // ------------------ RESPONSABLES LEGALES (Administrador) ------------------
+    public function responsablesIndex(Request $request)
+    {
+        $id_paciente = $request->query('id_paciente');
+        if ($id_paciente) {
+            $rows = DB::select("SELECT * FROM responsable_legal WHERE id_paciente = ? ORDER BY id_responsable_legal", [$id_paciente]);
+        } else {
+            $rows = DB::select("SELECT * FROM responsable_legal ORDER BY id_responsable_legal DESC");
+        }
+        return response()->json($rows);
+    }
+
+    public function responsablesStore(Request $request)
+    {
+        $data = $request->validate([
+            'id_paciente' => 'required|integer|exists:paciente,id_paciente',
+            'nombre' => 'required|string|max:50',
+            'apellido' => 'required|string|max:50',
+            'num_identificacion' => 'required|string|max:50|unique:responsable_legal,num_identificacion',
+            'parentesco' => 'required|string|max:50',
+            'telefono' => 'nullable|string|max:30',
+            'direccion' => 'nullable|string|max:200',
+            'correo' => 'nullable|email|max:50|unique:responsable_legal,correo',
+        ]);
+
+        $id = DB::table('responsable_legal')->insertGetId($data);
+
+        return response()->json(['id_responsable_legal' => $id], 201);
+    }
+
+    public function responsablesUpdate(Request $request, $id)
+    {
+        $exists = DB::selectOne("SELECT id_responsable_legal FROM responsable_legal WHERE id_responsable_legal = ?", [$id]);
+        if (!$exists)
+            return response()->json(['message' => 'Responsable no encontrado'], 404);
+
+        $data = $request->validate([
+            'id_paciente' => 'sometimes|required|integer|exists:paciente,id_paciente',
+            'nombre' => 'sometimes|required|string|max:50',
+            'apellido' => 'sometimes|required|string|max:50',
+            'num_identificacion' => [
+                'sometimes',
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('responsable_legal', 'num_identificacion')->ignore($id, 'id_responsable_legal')
+            ],
+            'parentesco' => 'sometimes|required|string|max:50',
+            'telefono' => 'sometimes|nullable|string|max:30',
+            'direccion' => 'sometimes|nullable|string|max:200',
+            'correo' => [
+                'sometimes',
+                'nullable',
+                'email',
+                'max:50',
+                Rule::unique('responsable_legal', 'correo')->ignore($id, 'id_responsable_legal')
+            ],
+        ]);
+
+        DB::table('responsable_legal')->where('id_responsable_legal', $id)->update($data);
+
+        return response()->json(['message' => 'Responsable actualizado']);
+    }
+
+    public function responsablesDestroy($id)
+    {
+        $deleted = DB::table('responsable_legal')->where('id_responsable_legal', $id)->delete();
+        if (!$deleted)
+            return response()->json(['message' => 'Responsable no encontrado'], 404);
+        return response()->json(['message' => 'Responsable eliminado']);
+    }
+
+    // GET /api/admin/pacientes/{id_paciente}/detalle
+    public function pacienteDetalle($id_paciente)
+    {
+        $paciente = DB::selectOne("
+            SELECT
+                p.id_paciente,
+                p.fecha_nacimiento,
+                p.sexo,
+                u.id_usuario,
+                u.nombres,
+                u.apellidos,
+                u.correo,
+                u.telefono,
+                u.direccion,
+                u.imagen,
+                u.estado
+            FROM paciente p
+            JOIN usuario u ON p.id_usuario = u.id_usuario
+            WHERE p.id_paciente = ?
+            LIMIT 1
+        ", [$id_paciente]);
+
+        if (!$paciente) {
+            return response()->json(['message' => 'Paciente no encontrado'], 404);
+        }
+
+        $responsables = DB::select("
+            SELECT
+                id_responsable_legal,
+                nombre,
+                apellido,
+                num_identificacion,
+                parentesco,
+                telefono,
+                direccion,
+                correo
+            FROM responsable_legal
+            WHERE id_paciente = ?
+            ORDER BY id_responsable_legal
+        ", [$id_paciente]);
+
+        return response()->json([
+            'paciente' => [
+                'id_paciente' => $paciente->id_paciente,
+                'fecha_nacimiento' => $paciente->fecha_nacimiento,
+                'sexo' => $paciente->sexo,
+            ],
+            'usuario' => [
+                'id_usuario' => $paciente->id_usuario,
+                'nombres' => $paciente->nombres,
+                'apellidos' => $paciente->apellidos,
+                'correo' => $paciente->correo,
+                'telefono' => $paciente->telefono,
+                'direccion' => $paciente->direccion,
+                'imagen' => $paciente->imagen,
+                'estado' => $paciente->estado,
+            ],
+            'responsables_legales' => $responsables,
+        ]);
     }
 }
