@@ -33,7 +33,7 @@ class AdminController extends Controller
             'apellidos' => 'nullable|string|max:255',
             'direccion' => 'nullable|string|max:500',
             'telefono' => 'nullable|string|max:50',
-            'correo' => 'required|email|unique:usuarios,correo',
+            'correo' => 'required|email|unique:usuario,correo', // <--- usuario (singular)
             'contrasena' => 'required|string|min:6',
             'privilegio' => 'nullable|integer',
             'imagen' => 'nullable|string',
@@ -60,7 +60,12 @@ class AdminController extends Controller
             'apellidos' => 'sometimes|nullable|string|max:255',
             'direccion' => 'sometimes|nullable|string|max:500',
             'telefono' => 'sometimes|nullable|string|max:50',
-            'correo' => ['sometimes', 'required', 'email', Rule::unique('usuarios', 'correo')->ignore($usuario->id_usuario ?? $usuario->id, 'id_usuario')],
+            'correo' => [
+                'sometimes',
+                'required',
+                'email',
+                Rule::unique('usuario', 'correo')->ignore($usuario->id_usuario, 'id_usuario') // <--- usuario (singular)
+            ],
             'contrasena' => 'sometimes|nullable|string|min:6',
             'privilegio' => 'sometimes|nullable|integer',
             'imagen' => 'sometimes|nullable|string',
@@ -209,7 +214,7 @@ class AdminController extends Controller
     public function especialistasStore(Request $request)
     {
         $data = $request->validate([
-            'id_usuario' => 'required|integer|exists:usuarios,id_usuario',
+            'id_usuario' => 'required|integer|exists:usuario,id_usuario', // <--- usuario
             'especialidad' => 'required|string|max:255',
         ]);
 
@@ -227,7 +232,7 @@ class AdminController extends Controller
         }
 
         $data = $request->validate([
-            'id_usuario' => 'sometimes|required|integer|exists:usuarios,id_usuario',
+            'id_usuario' => 'sometimes|required|integer|exists:usuario,id_usuario', // <--- usuario
             'especialidad' => 'sometimes|required|string|max:255',
         ]);
 
@@ -261,7 +266,7 @@ class AdminController extends Controller
     public function pacientesStore(Request $request)
     {
         $data = $request->validate([
-            'id_usuario' => 'required|integer|exists:usuarios,id_usuario',
+            'id_usuario' => 'required|integer|exists:usuario,id_usuario', // <--- usuario
             'fecha_nacimiento' => 'required|date',
             'sexo' => 'required|in:M,F',
         ]);
@@ -280,7 +285,7 @@ class AdminController extends Controller
         }
 
         $data = $request->validate([
-            'id_usuario' => 'sometimes|required|integer|exists:usuarios,id_usuario',
+            'id_usuario' => 'sometimes|required|integer|exists:usuario,id_usuario', // <--- usuario
             'fecha_nacimiento' => 'sometimes|required|date',
             'sexo' => 'sometimes|required|in:M,F',
         ]);
@@ -316,7 +321,7 @@ class AdminController extends Controller
     {
         $data = $request->validate([
             'pregunta' => 'required|string|max:1000',
-            'id_area' => 'required|integer|exists:areas,id_area',
+            'id_area' => 'required|integer|exists:area,id_area', // <--- area
         ]);
 
         $pregunta = PreguntaAdi::create($data);
@@ -334,7 +339,7 @@ class AdminController extends Controller
 
         $data = $request->validate([
             'pregunta' => 'sometimes|required|string|max:1000',
-            'id_area' => 'sometimes|required|integer|exists:areas,id_area',
+            'id_area' => 'sometimes|required|integer|exists:area,id_area', // <--- area
         ]);
 
         $pregunta->update($data);
@@ -367,8 +372,8 @@ class AdminController extends Controller
     public function testsAdirStore(Request $request)
     {
         $data = $request->validate([
-            'id_paciente' => 'required|integer|exists:pacientes,id_paciente',
-            'id_especialista' => 'required|integer|exists:especialistas,id_especialista',
+            'id_paciente' => 'required|integer|exists:paciente,id_paciente',       // <--- paciente
+            'id_especialista' => 'required|integer|exists:especialista,id_especialista', // <--- especialista
             'fecha' => 'required|date',
             'diagnostico' => 'nullable|string',
         ]);
@@ -387,8 +392,8 @@ class AdminController extends Controller
         }
 
         $data = $request->validate([
-            'id_paciente' => 'sometimes|required|integer|exists:pacientes,id_paciente',
-            'id_especialista' => 'sometimes|required|integer|exists:especialistas,id_especialista',
+            'id_paciente' => 'sometimes|required|integer|exists:paciente,id_paciente',        // <--- paciente
+            'id_especialista' => 'sometimes|required|integer|exists:especialista,id_especialista', // <--- especialista
             'fecha' => 'sometimes|required|date',
             'diagnostico' => 'sometimes|nullable|string',
         ]);
@@ -423,10 +428,10 @@ class AdminController extends Controller
     public function testsAdosStore(Request $request)
     {
         $data = $request->validate([
-            'id_paciente' => 'required|integer|exists:pacientes,id_paciente',
+            'id_paciente' => 'required|integer|exists:paciente,id_paciente',       // <--- paciente
             'fecha' => 'required|date',
             'modulo' => 'required|string|max:255',
-            'id_especialista' => 'required|integer|exists:especialistas,id_especialista',
+            'id_especialista' => 'required|integer|exists:especialista,id_especialista', // <--- especialista
             'diagnostico' => 'nullable|string',
             'total_punto' => 'nullable|numeric',
         ]);
@@ -445,10 +450,10 @@ class AdminController extends Controller
         }
 
         $data = $request->validate([
-            'id_paciente' => 'sometimes|required|integer|exists:pacientes,id_paciente',
+            'id_paciente' => 'sometimes|required|integer|exists:paciente,id_paciente',        // <--- paciente
             'fecha' => 'sometimes|required|date',
             'modulo' => 'sometimes|required|string|max:255',
-            'id_especialista' => 'sometimes|required|integer|exists:especialistas,id_especialista',
+            'id_especialista' => 'sometimes|required|integer|exists:especialista,id_especialista', // <--- especialista
             'diagnostico' => 'sometimes|nullable|string',
             'total_punto' => 'sometimes|nullable|numeric',
         ]);
