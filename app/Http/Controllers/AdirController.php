@@ -70,7 +70,7 @@ class AdirController extends Controller
             WHERE t.id_adir = ?
         ", [$id_adir]);
 
-        if (! $test) {
+        if (!$test) {
             return response()->json(['message' => 'Test no encontrado.'], 404);
         }
 
@@ -84,7 +84,7 @@ class AdirController extends Controller
 
         $testArr = (array) $test;
         $testArr['especialista'] = $test->especialista_nombre
-            ? trim(($test->especialista_nombre ?? '').' '.($test->especialista_apellidos ?? ''))
+            ? trim(($test->especialista_nombre ?? '') . ' ' . ($test->especialista_apellidos ?? ''))
             : "";
         unset($testArr['especialista_nombre'], $testArr['especialista_apellidos']);
 
@@ -97,7 +97,7 @@ class AdirController extends Controller
     // PUT /api/adir/diagnostico/{id_adir}
     public function guardarDiagnostico(Request $request, $id_adir)
     {
-        $diagnostico    = $request->input('diagnostico');
+        $diagnostico = $request->input('diagnostico');
         $id_especialista = $request->input('id_especialista');
 
         try {
@@ -137,7 +137,7 @@ class AdirController extends Controller
             LIMIT 1
         ", [$id_paciente]);
 
-        if (! $test) {
+        if (!$test) {
             return response()->json(['message' => 'El paciente no tiene tests ADIR.'], 404);
         }
 
@@ -146,6 +146,7 @@ class AdirController extends Controller
             SELECT r.id_pregunta, q.pregunta, r.calificacion, r.observacion
             FROM respuesta_adi r
             JOIN pregunta_adi q ON r.id_pregunta = q.id_pregunta
+            JOIN area a ON q.id_area = a.id_area
             WHERE r.id_adir = ?
         ", [$test->id_adir]);
 
@@ -161,7 +162,7 @@ class AdirController extends Controller
         // Para generar PDF en Laravel, instala dompdf:
         // composer require barryvdh/laravel-dompdf
         // Si no está instalado, devolvemos 501 como placeholder.
-        if (! class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+        if (!class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
             return response()->json([
                 'message' => 'PDF no disponible. Instala barryvdh/laravel-dompdf para habilitarlo.'
             ], 501);
@@ -169,13 +170,16 @@ class AdirController extends Controller
 
         // Carga de datos (similar a Node)
         $adir = DB::selectOne("SELECT * FROM test_adi_r WHERE id_adir = ?", [$id_adir]);
-        if (! $adir) return response()->json(['message' => 'No existe el test.'], 404);
+        if (!$adir)
+            return response()->json(['message' => 'No existe el test.'], 404);
 
         $paciente = DB::selectOne("SELECT * FROM paciente WHERE id_paciente = ?", [$adir->id_paciente]);
-        if (! $paciente) return response()->json(['message' => 'Paciente no encontrado.'], 404);
+        if (!$paciente)
+            return response()->json(['message' => 'Paciente no encontrado.'], 404);
 
         $usuarioPaciente = DB::selectOne("SELECT * FROM usuario WHERE id_usuario = ?", [$paciente->id_usuario]);
-        if (! $usuarioPaciente) return response()->json(['message' => 'Usuario paciente no encontrado.'], 404);
+        if (!$usuarioPaciente)
+            return response()->json(['message' => 'Usuario paciente no encontrado.'], 404);
 
         $especialista = DB::selectOne("SELECT * FROM especialista WHERE id_especialista = ?", [$adir->id_especialista]);
         $usuarioEspecialista = $especialista
@@ -221,21 +225,23 @@ class AdirController extends Controller
         $tipo_sujeto = $request->input('tipo_sujeto', '');
         $edad_mental_confirmada = $request->boolean('edad_mental_confirmada');
 
-        if (! $id_paciente || ! $id_especialista || ! $edad_mental_confirmada) {
+        if (!$id_paciente || !$id_especialista || !$edad_mental_confirmada) {
             return response()->json(['message' => 'Faltan datos obligatorios.'], 400);
         }
-        if (! $edad_mental_confirmada) {
+        if (!$edad_mental_confirmada) {
             return response()->json(['message' => 'Debe confirmar que el paciente tiene al menos 2 años de edad mental.'], 400);
         }
 
         $pac = DB::selectOne("SELECT terminos_privacida, filtro_dsm_5 FROM paciente WHERE id_paciente = ?", [$id_paciente]);
-        if (! $pac) return response()->json(['message' => 'Paciente no encontrado.'], 404);
+        if (!$pac)
+            return response()->json(['message' => 'Paciente no encontrado.'], 404);
         if (($pac->terminos_privacida ?? 0) != 1 || ($pac->filtro_dsm_5 ?? 0) != 1) {
             return response()->json(['message' => 'El paciente debe aceptar los términos y cumplir el filtro DSM-5.'], 403);
         }
 
         $esp = DB::selectOne("SELECT * FROM especialista WHERE id_especialista = ?", [$id_especialista]);
-        if (! $esp) return response()->json(['message' => 'Especialista no válido.'], 403);
+        if (!$esp)
+            return response()->json(['message' => 'Especialista no válido.'], 403);
 
         DB::insert("
             INSERT INTO test_adi_r (id_paciente, id_especialista, fecha, algoritmo, tipo_sujeto, estado)
@@ -243,7 +249,7 @@ class AdirController extends Controller
         ", [$id_paciente, $id_especialista, $algoritmo, $tipo_sujeto]);
 
         $id = DB::getPdo()->lastInsertId();
-        return response()->json(['id_adir' => (int)$id]);
+        return response()->json(['id_adir' => (int) $id]);
     }
 
     // GET /api/adir/preguntas-con-respuestas/{id_adir}
@@ -251,7 +257,7 @@ class AdirController extends Controller
     {
         $rows = DB::select("
             SELECT p.id_pregunta, p.pregunta, p.id_area, a.area,
-                   r.codigo as codigo_respuesta, r.observacion
+                   r.calificacion as codigo_respuesta, r.observacion
             FROM pregunta_adi p
             JOIN area a ON p.id_area = a.id_area
             LEFT JOIN respuesta_adi r ON r.id_pregunta = p.id_pregunta AND r.id_adir = ?
@@ -278,7 +284,7 @@ class AdirController extends Controller
             WHERE t.id_adir = ?
         ", [$id_adir]);
 
-        if (! $pac) {
+        if (!$pac) {
             return response()->json(['preguntas' => $preguntas, 'respuestas' => $respuestas]);
         }
 
@@ -295,7 +301,8 @@ class AdirController extends Controller
         $results = DB::select("SELECT c.id_codigo, c.codigo, c.id_pregunta FROM codigo c");
         $map = [];
         foreach ($results as $r) {
-            if (! isset($map[$r->id_pregunta])) $map[$r->id_pregunta] = [];
+            if (!isset($map[$r->id_pregunta]))
+                $map[$r->id_pregunta] = [];
             $map[$r->id_pregunta][] = ['id_codigo' => $r->id_codigo, 'codigo' => $r->codigo];
         }
         return response()->json($map);
@@ -306,10 +313,11 @@ class AdirController extends Controller
     {
         $id_adir = $request->input('id_adir');
         $id_pregunta = $request->input('id_pregunta');
-        $codigo = $request->input('codigo');
+        // Acepta 'calificacion' o 'codigo' desde el front
+        $calificacion = $request->input('calificacion', $request->input('codigo'));
         $observacion = $request->input('observacion', '');
 
-        if (! $id_adir || ! $id_pregunta) {
+        if (!$id_adir || !$id_pregunta || $calificacion === null) {
             return response()->json(['message' => 'Faltan datos.'], 400);
         }
 
@@ -320,14 +328,14 @@ class AdirController extends Controller
 
         if ($row) {
             DB::update(
-                "UPDATE respuesta_adi SET codigo = ?, observacion = ? WHERE id_adir = ? AND id_pregunta = ?",
-                [$codigo, $observacion, $id_adir, $id_pregunta]
+                "UPDATE respuesta_adi SET calificacion = ?, observacion = ? WHERE id_adir = ? AND id_pregunta = ?",
+                [$calificacion, $observacion, $id_adir, $id_pregunta]
             );
             return response()->json(['message' => 'Respuesta actualizada.']);
         } else {
             DB::insert(
-                "INSERT INTO respuesta_adi (id_adir, id_pregunta, codigo, observacion) VALUES (?, ?, ?, ?)",
-                [$id_adir, $id_pregunta, $codigo, $observacion]
+                "INSERT INTO respuesta_adi (id_adir, id_pregunta, calificacion, observacion) VALUES (?, ?, ?, ?)",
+                [$id_adir, $id_pregunta, $calificacion, $observacion]
             );
             return response()->json(['message' => 'Respuesta guardada.']);
         }
@@ -337,7 +345,8 @@ class AdirController extends Controller
     public function obtenerIdPacientePorAdir($id_adir)
     {
         $row = DB::selectOne("SELECT id_paciente FROM test_adi_r WHERE id_adir = ?", [$id_adir]);
-        if (! $row) return response()->json(['message' => 'Test no encontrado.'], 404);
+        if (!$row)
+            return response()->json(['message' => 'Test no encontrado.'], 404);
         return response()->json(['id_paciente' => $row->id_paciente]);
     }
 
@@ -348,12 +357,15 @@ class AdirController extends Controller
             SELECT codigo FROM respuesta_adi WHERE id_adir = ? AND id_pregunta = 30 LIMIT 1
         ", [$id_adir]);
 
-        if (! $r) return response()->json(['message' => 'No existe respuesta para la pregunta 30.'], 404);
+        if (!$r)
+            return response()->json(['message' => 'No existe respuesta para la pregunta 30.'], 404);
 
-        $codigo = (int)$r->codigo;
+        $codigo = (int) $r->codigo;
         $tipo = 'no-verbal';
-        if ($codigo === 0) $tipo = 'verbal';
-        else if ($codigo === 1 || $codigo === 2) $tipo = 'no-verbal';
+        if ($codigo === 0)
+            $tipo = 'verbal';
+        else if ($codigo === 1 || $codigo === 2)
+            $tipo = 'no-verbal';
 
         DB::update("UPDATE test_adi_r SET tipo_sujeto = ? WHERE id_adir = ?", [$tipo, $id_adir]);
 
@@ -364,7 +376,8 @@ class AdirController extends Controller
     public function obtenerFechaEntrevistaPorAdir($id_adir)
     {
         $row = DB::selectOne("SELECT fecha FROM test_adi_r WHERE id_adir = ?", [$id_adir]);
-        if (! $row) return response()->json(['message' => 'Test no encontrado.'], 404);
+        if (!$row)
+            return response()->json(['message' => 'Test no encontrado.'], 404);
         return response()->json(['fecha_entrevista' => $row->fecha]);
     }
 
@@ -415,14 +428,15 @@ class AdirController extends Controller
             WHERE t.id_adir = ?
         ", [$id_adir]);
 
-        if (! $datos) return response()->json(['message' => 'No se encontró el test.'], 404);
+        if (!$datos)
+            return response()->json(['message' => 'No se encontró el test.'], 404);
 
         $respuestas = DB::select("
             SELECT
                 a.area,
                 q.id_pregunta,
                 q.pregunta,
-                r.codigo,
+                r.calificacion,
                 r.observacion
             FROM respuesta_adi r
             JOIN pregunta_adi q ON r.id_pregunta = q.id_pregunta
@@ -436,7 +450,7 @@ class AdirController extends Controller
             'apellidos' => $datos->apellidos,
             'fecha' => $datos->fecha_entrevista,
             'especialista' => $datos->especialista_nombre
-                ? trim(($datos->especialista_nombre ?? '').' '.($datos->especialista_apellidos ?? '')) : '',
+                ? trim(($datos->especialista_nombre ?? '') . ' ' . ($datos->especialista_apellidos ?? '')) : '',
             'diagnostico' => $datos->diagnostico ?? 'Aquí aparecerá el resumen de tu diagnóstico.',
             'algoritmo' => $datos->algoritmo ?? 'No disponible',
             'tipo_sujeto' => $datos->tipo_sujeto ?? 'No disponible',
@@ -450,11 +464,11 @@ class AdirController extends Controller
             $texto = "Hola {$nombre} {$apellidos},\n\nSe ha registrado un nuevo diagnóstico ADIR para ti:\n\nConsulta tu diagnostico en la sección de Resultados\n\nSi tienes dudas, contacta a tu especialista.\n\nSaludos.";
             Mail::raw($texto, function ($m) use ($destinatario) {
                 $m->from('aplicaciondediagnosticodetea@gmail.com', 'TEA Diagnóstico')
-                  ->to($destinatario)
-                  ->subject('Nuevo diagnóstico ADIR');
+                    ->to($destinatario)
+                    ->subject('Nuevo diagnóstico ADIR');
             });
         } catch (\Throwable $e) {
-            Log::error('Error enviando correo de diagnóstico: '.$e->getMessage());
+            Log::error('Error enviando correo de diagnóstico: ' . $e->getMessage());
         }
     }
 
@@ -473,11 +487,11 @@ Equipo TEA Diagnóstico
 ";
             Mail::raw($mensaje, function ($m) use ($destinatario) {
                 $m->from('aplicaciondediagnosticodetea@gmail.com', 'TEA Diagnóstico')
-                  ->to($destinatario)
-                  ->subject('Diagnóstico actualizado - Test ADI-R');
+                    ->to($destinatario)
+                    ->subject('Diagnóstico actualizado - Test ADI-R');
             });
         } catch (\Throwable $e) {
-            Log::error('Error enviando correo de diagnóstico ADI-R: '.$e->getMessage());
+            Log::error('Error enviando correo de diagnóstico ADI-R: ' . $e->getMessage());
         }
     }
 }
