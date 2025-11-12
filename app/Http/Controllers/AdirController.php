@@ -141,9 +141,8 @@ class AdirController extends Controller
             return response()->json(['message' => 'El paciente no tiene tests ADIR.'], 404);
         }
 
-        // Nota: este SELECT usa 'calificacion' (tal como en tu código Node)
         $respuestas = DB::select("
-            SELECT r.id_pregunta, q.pregunta, r.calificacion, r.observacion
+            SELECT r.id_pregunta, q.pregunta, r.codigo, r.observacion
             FROM respuesta_adi r
             JOIN pregunta_adi q ON r.id_pregunta = q.id_pregunta
             JOIN area a ON q.id_area = a.id_area
@@ -257,7 +256,7 @@ class AdirController extends Controller
     {
         $rows = DB::select("
             SELECT p.id_pregunta, p.pregunta, p.id_area, a.area,
-                   r.calificacion as codigo_respuesta, r.observacion
+                   r.codigo as codigo_respuesta, r.observacion
             FROM pregunta_adi p
             JOIN area a ON p.id_area = a.id_area
             LEFT JOIN respuesta_adi r ON r.id_pregunta = p.id_pregunta AND r.id_adir = ?
@@ -469,7 +468,7 @@ class AdirController extends Controller
                 a.area,
                 q.id_pregunta,
                 q.pregunta,
-                r.calificacion,
+                r.codigo,
                 r.observacion
             FROM respuesta_adi r
             JOIN pregunta_adi q ON r.id_pregunta = q.id_pregunta
