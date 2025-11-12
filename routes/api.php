@@ -70,6 +70,7 @@ Route::prefix('admin')->group(function () {
     Route::put('responsables-legales/{id}', [AdminController::class, 'responsablesUpdate']);
     Route::delete('responsables-legales/{id}', [AdminController::class, 'responsablesDestroy']);
 
+    Route::get('pacientes-lista', [AdminController::class, 'pacientesLista']);
     Route::get('pacientes/{id_paciente}/detalle', [AdminController::class, 'pacienteDetalle']);
 });
 

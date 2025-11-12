@@ -548,64 +548,101 @@ class AdminController extends Controller
         return response()->json(['message' => 'Responsable eliminado']);
     }
 
-    // GET /api/admin/pacientes/{id_paciente}/detalle
+    // GET /api/admin/pacientes-lista  (Spring: getPacientesConNombres)
+    public function pacientesLista()
+    {
+        try {
+            $rows = DB::select("
+                SELECT
+                    p.id_paciente,
+                    u.id_usuario,
+                    u.nombres,
+                    u.apellidos,
+                    u.correo,
+                    u.telefono,
+                    u.direccion,
+                    u.estado,
+                    p.fecha_nacimiento,
+                    p.sexo
+                FROM paciente p
+                INNER JOIN usuario u ON p.id_usuario = u.id_usuario
+                ORDER BY u.nombres, u.apellidos
+            ");
+            return response()->json($rows);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'Error al obtener pacientes',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // GET /api/admin/pacientes/{id_paciente}/detalle (Spring: getPacienteDetalle)
     public function pacienteDetalle($id_paciente)
     {
-        $paciente = DB::selectOne("
-            SELECT
-                p.id_paciente,
-                p.fecha_nacimiento,
-                p.sexo,
-                u.id_usuario,
-                u.nombres,
-                u.apellidos,
-                u.correo,
-                u.telefono,
-                u.direccion,
-                u.imagen,
-                u.estado
-            FROM paciente p
-            JOIN usuario u ON p.id_usuario = u.id_usuario
-            WHERE p.id_paciente = ?
-            LIMIT 1
-        ", [$id_paciente]);
+        try {
+            $pacRows = DB::select("
+                SELECT
+                    p.id_paciente,
+                    p.fecha_nacimiento,
+                    p.sexo,
+                    u.id_usuario,
+                    u.nombres,
+                    u.apellidos,
+                    u.correo,
+                    u.telefono,
+                    u.direccion,
+                    u.imagen,
+                    u.estado
+                FROM paciente p
+                JOIN usuario u ON p.id_usuario = u.id_usuario
+                WHERE p.id_paciente = ?
+                LIMIT 1
+            ", [$id_paciente]);
 
-        if (!$paciente) {
-            return response()->json(['message' => 'Paciente no encontrado'], 404);
+            if (empty($pacRows)) {
+                return response()->json(['message' => 'Paciente no encontrado'], 404);
+            }
+            $row = $pacRows[0];
+
+            $responsables = DB::select("
+                SELECT
+                    id_responsable_legal,
+                    nombre,
+                    apellido,
+                    num_identificacion,
+                    parentesco,
+                    telefono,
+                    direccion,
+                    correo
+                FROM responsable_legal
+                WHERE id_paciente = ?
+                ORDER BY id_responsable_legal
+            ", [$id_paciente]);
+
+            return response()->json([
+                'paciente' => [
+                    'id_paciente' => $row->id_paciente,
+                    'fecha_nacimiento' => $row->fecha_nacimiento,
+                    'sexo' => $row->sexo,
+                ],
+                'usuario' => [
+                    'id_usuario' => $row->id_usuario,
+                    'nombres' => $row->nombres,
+                    'apellidos' => $row->apellidos,
+                    'correo' => $row->correo,
+                    'telefono' => $row->telefono,
+                    'direccion' => $row->direccion,
+                    'imagen' => $row->imagen,
+                    'estado' => $row->estado,
+                ],
+                'responsables_legales' => $responsables ?? [],
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'Error al obtener detalle',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $responsables = DB::select("
-            SELECT
-                id_responsable_legal,
-                nombre,
-                apellido,
-                num_identificacion,
-                parentesco,
-                telefono,
-                direccion,
-                correo
-            FROM responsable_legal
-            WHERE id_paciente = ?
-            ORDER BY id_responsable_legal
-        ", [$id_paciente]);
-
-        return response()->json([
-            'paciente' => [
-                'id_paciente' => $paciente->id_paciente,
-                'fecha_nacimiento' => $paciente->fecha_nacimiento,
-                'sexo' => $paciente->sexo,
-            ],
-            'usuario' => [
-                'id_usuario' => $paciente->id_usuario,
-                'nombres' => $paciente->nombres,
-                'apellidos' => $paciente->apellidos,
-                'correo' => $paciente->correo,
-                'telefono' => $paciente->telefono,
-                'direccion' => $paciente->direccion,
-                'imagen' => $paciente->imagen,
-                'estado' => $paciente->estado,
-            ],
-            'responsables_legales' => $responsables,
-        ]);
     }
 }
