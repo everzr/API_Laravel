@@ -311,34 +311,67 @@ class AdirController extends Controller
     // POST /api/adir/guardar-respuesta
     public function guardarRespuestaAdir(Request $request)
     {
-        $id_adir = $request->input('id_adir');
-        $id_pregunta = $request->input('id_pregunta');
-        // Acepta 'calificacion' o 'codigo' desde el front
-        $calificacion = $request->input('calificacion', $request->input('codigo'));
-        $observacion = $request->input('observacion', '');
+        try {
+            // Leer body y convertir de forma segura
+            $idAdirRaw = $request->input('id_adir');
+            $idPreguntaRaw = $request->input('id_pregunta');
+            // Acepta 'codigo' o 'calificacion' desde el front
+            $codigoRaw = $request->input('codigo', $request->input('calificacion'));
+            $observacion = (string) ($request->input('observacion') ?? '');
 
-        if (!$id_adir || !$id_pregunta || $calificacion === null) {
-            return response()->json(['message' => 'Faltan datos.'], 400);
-        }
+            $id_adir = $this->toIntOrNull($idAdirRaw);
+            $id_pregunta = $this->toIntOrNull($idPreguntaRaw);
+            $codigo = $this->toIntOrNull($codigoRaw);
 
-        $row = DB::selectOne(
-            "SELECT id_respuesta FROM respuesta_adi WHERE id_adir = ? AND id_pregunta = ?",
-            [$id_adir, $id_pregunta]
-        );
+            // Si viene vacío/null, usa 0 por defecto (igual que en Spring)
+            if ($codigo === null) {
+                $codigo = 0;
+            }
 
-        if ($row) {
-            DB::update(
-                "UPDATE respuesta_adi SET calificacion = ?, observacion = ? WHERE id_adir = ? AND id_pregunta = ?",
-                [$calificacion, $observacion, $id_adir, $id_pregunta]
+            if ($id_adir === null || $id_pregunta === null) {
+                return response()->json(['message' => 'Datos incompletos o inválidos'], 400);
+            }
+
+            // Existe respuesta previa
+            $exists = DB::selectOne(
+                "SELECT 1 AS e FROM respuesta_adi WHERE id_adir = ? AND id_pregunta = ? LIMIT 1",
+                [$id_adir, $id_pregunta]
             );
-            return response()->json(['message' => 'Respuesta actualizada.']);
-        } else {
-            DB::insert(
-                "INSERT INTO respuesta_adi (id_adir, id_pregunta, calificacion, observacion) VALUES (?, ?, ?, ?)",
-                [$id_adir, $id_pregunta, $calificacion, $observacion]
-            );
-            return response()->json(['message' => 'Respuesta guardada.']);
+
+            if ($exists) {
+                DB::update(
+                    "UPDATE respuesta_adi SET codigo = ?, observacion = ? WHERE id_adir = ? AND id_pregunta = ?",
+                    [$codigo, $observacion, $id_adir, $id_pregunta]
+                );
+                return response()->json(['message' => 'Respuesta actualizada.']);
+            } else {
+                DB::insert(
+                    "INSERT INTO respuesta_adi (id_adir, id_pregunta, codigo, observacion) VALUES (?, ?, ?, ?)",
+                    [$id_adir, $id_pregunta, $codigo, $observacion]
+                );
+                return response()->json(['message' => 'Respuesta guardada.']);
+            }
+        } catch (\Throwable $e) {
+            Log::error('ADIR guardarRespuesta error: ' . $e->getMessage());
+            return response()->json(['message' => 'Error al guardar respuesta: ' . $e->getMessage()], 500);
         }
+    }
+
+    // Conversión segura a entero (null si no es numérico)
+    private function toIntOrNull($value): ?int
+    {
+        if (is_int($value))
+            return $value;
+        if (is_float($value))
+            return (int) $value;
+        if (is_string($value)) {
+            $s = trim($value);
+            if ($s !== '' && preg_match('/^-?\d+$/', $s))
+                return (int) $s;
+        }
+        if (is_numeric($value))
+            return (int) $value;
+        return null;
     }
 
     // GET /api/adir/id-paciente/{id_adir}
