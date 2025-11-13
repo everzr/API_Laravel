@@ -30,29 +30,34 @@ class AdminController extends Controller
     public function usuariosStore(Request $request)
     {
         $data = $request->validate([
-            'nombres' => 'required|string|max:255',
-            'apellidos' => 'nullable|string|max:255',
+            'nombres' => 'required|string|max:50',
+            'apellidos' => 'nullable|string|max:50',
             'direccion' => 'nullable|string|max:500',
             'telefono' => 'nullable|string|max:50',
-            'correo' => 'required|email|unique:usuario,correo',
+            'correo' => 'required|email|max:50|unique:usuario,correo',
             'contrasena' => 'required|string|min:6',
             'privilegio' => 'nullable|integer',
             'imagen' => 'nullable|string',
             'estado' => 'nullable|integer',
         ]);
 
-        // Defaults para NOT NULL sin valor
-        $data['privilegio'] = $data['privilegio'] ?? 0;
-        $data['estado'] = $data['estado'] ?? 1;
-
-        $data['contrasena'] = Hash::make($data['contrasena']);
+        $payload = [
+            'nombres' => $data['nombres'],
+            'apellidos' => $data['apellidos'] ?? null,
+            'direccion' => $data['direccion'] ?? null,
+            'telefono' => $data['telefono'] ?? null,
+            'correo' => $data['correo'],
+            'contrasena' => Hash::make($data['contrasena']),
+            'privilegio' => $data['privilegio'] ?? 0,
+            'imagen' => $data['imagen'] ?? null,
+            'estado' => $data['estado'] ?? 1,
+            'requiere_cambio_contrasena' => 0,
+        ];
 
         try {
-            $usuario = Usuario::create($data);
-            return response()->json($usuario, 201);
-        } catch (\Illuminate\Database\QueryException $e) {
-            Log::error('usuariosStore DB error: ' . $e->getMessage());
-            return response()->json(['message' => 'Error al guardar usuario', 'error' => $e->getMessage()], 500);
+            $id = DB::table('usuario')->insertGetId($payload);
+            $created = DB::selectOne("SELECT id_usuario, nombres, apellidos, correo, telefono, direccion, privilegio, imagen, estado FROM usuario WHERE id_usuario = ?", [$id]);
+            return response()->json($created, 201);
         } catch (\Throwable $e) {
             Log::error('usuariosStore error: ' . $e->getMessage());
             return response()->json(['message' => 'Error al guardar usuario', 'error' => $e->getMessage()], 500);
@@ -62,21 +67,22 @@ class AdminController extends Controller
     // Actualizar usuario
     public function usuariosUpdate(Request $request, $id)
     {
-        $usuario = Usuario::where('id_usuario', $id)->first();
-        if (!$usuario) {
+        $exists = DB::selectOne("SELECT id_usuario FROM usuario WHERE id_usuario = ?", [$id]);
+        if (!$exists) {
             return response()->json(['message' => 'Usuario no encontrado'], 404);
         }
 
         $data = $request->validate([
-            'nombres' => 'sometimes|required|string|max:255',
-            'apellidos' => 'sometimes|nullable|string|max:255',
+            'nombres' => 'sometimes|required|string|max:50',
+            'apellidos' => 'sometimes|nullable|string|max:50',
             'direccion' => 'sometimes|nullable|string|max:500',
             'telefono' => 'sometimes|nullable|string|max:50',
             'correo' => [
                 'sometimes',
                 'required',
                 'email',
-                Rule::unique('usuario', 'correo')->ignore($usuario->id_usuario, 'id_usuario')
+                'max:50',
+                Rule::unique('usuario', 'correo')->ignore($id, 'id_usuario')
             ],
             'contrasena' => 'sometimes|nullable|string|min:6',
             'privilegio' => 'sometimes|nullable|integer',
@@ -84,24 +90,24 @@ class AdminController extends Controller
             'estado' => 'sometimes|nullable|integer',
         ]);
 
-        if (!empty($data['contrasena'])) {
-            $data['contrasena'] = Hash::make($data['contrasena']);
-        } else {
-            unset($data['contrasena']);
+        $update = [];
+        foreach (['nombres', 'apellidos', 'direccion', 'telefono', 'correo', 'privilegio', 'imagen', 'estado'] as $k) {
+            if (array_key_exists($k, $data)) {
+                $update[$k] = $data[$k];
+            }
         }
-
-        // Defaults si vienen null y la BD no permite null
-        if (array_key_exists('privilegio', $data) && $data['privilegio'] === null)
-            $data['privilegio'] = 0;
-        if (array_key_exists('estado', $data) && $data['estado'] === null)
-            $data['estado'] = 1;
+        if (array_key_exists('contrasena', $data) && !empty($data['contrasena'])) {
+            $update['contrasena'] = Hash::make($data['contrasena']);
+        }
+        if (array_key_exists('privilegio', $update) && $update['privilegio'] === null)
+            $update['privilegio'] = 0;
+        if (array_key_exists('estado', $update) && $update['estado'] === null)
+            $update['estado'] = 1;
 
         try {
-            $usuario->update($data);
-            return response()->json($usuario);
-        } catch (\Illuminate\Database\QueryException $e) {
-            Log::error('usuariosUpdate DB error: ' . $e->getMessage());
-            return response()->json(['message' => 'Error al actualizar usuario', 'error' => $e->getMessage()], 500);
+            DB::table('usuario')->where('id_usuario', $id)->update($update);
+            $updated = DB::selectOne("SELECT id_usuario, nombres, apellidos, correo, telefono, direccion, privilegio, imagen, estado FROM usuario WHERE id_usuario = ?", [$id]);
+            return response()->json($updated);
         } catch (\Throwable $e) {
             Log::error('usuariosUpdate error: ' . $e->getMessage());
             return response()->json(['message' => 'Error al actualizar usuario', 'error' => $e->getMessage()], 500);
