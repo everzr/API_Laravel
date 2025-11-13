@@ -14,6 +14,7 @@ use App\Models\TestAdos; // <-- agregado
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log; // <-- agregar
 
 class AdminController extends Controller
 {
@@ -33,18 +34,29 @@ class AdminController extends Controller
             'apellidos' => 'nullable|string|max:255',
             'direccion' => 'nullable|string|max:500',
             'telefono' => 'nullable|string|max:50',
-            'correo' => 'required|email|unique:usuario,correo', // <--- usuario (singular)
+            'correo' => 'required|email|unique:usuario,correo',
             'contrasena' => 'required|string|min:6',
             'privilegio' => 'nullable|integer',
             'imagen' => 'nullable|string',
             'estado' => 'nullable|integer',
         ]);
 
+        // Defaults para NOT NULL sin valor
+        $data['privilegio'] = $data['privilegio'] ?? 0;
+        $data['estado'] = $data['estado'] ?? 1;
+
         $data['contrasena'] = Hash::make($data['contrasena']);
 
-        $usuario = Usuario::create($data);
-
-        return response()->json($usuario, 201);
+        try {
+            $usuario = Usuario::create($data);
+            return response()->json($usuario, 201);
+        } catch (\Illuminate\Database\QueryException $e) {
+            Log::error('usuariosStore DB error: ' . $e->getMessage());
+            return response()->json(['message' => 'Error al guardar usuario', 'error' => $e->getMessage()], 500);
+        } catch (\Throwable $e) {
+            Log::error('usuariosStore error: ' . $e->getMessage());
+            return response()->json(['message' => 'Error al guardar usuario', 'error' => $e->getMessage()], 500);
+        }
     }
 
     // Actualizar usuario
@@ -64,7 +76,7 @@ class AdminController extends Controller
                 'sometimes',
                 'required',
                 'email',
-                Rule::unique('usuario', 'correo')->ignore($usuario->id_usuario, 'id_usuario') // <--- usuario (singular)
+                Rule::unique('usuario', 'correo')->ignore($usuario->id_usuario, 'id_usuario')
             ],
             'contrasena' => 'sometimes|nullable|string|min:6',
             'privilegio' => 'sometimes|nullable|integer',
@@ -78,9 +90,22 @@ class AdminController extends Controller
             unset($data['contrasena']);
         }
 
-        $usuario->update($data);
+        // Defaults si vienen null y la BD no permite null
+        if (array_key_exists('privilegio', $data) && $data['privilegio'] === null)
+            $data['privilegio'] = 0;
+        if (array_key_exists('estado', $data) && $data['estado'] === null)
+            $data['estado'] = 1;
 
-        return response()->json($usuario);
+        try {
+            $usuario->update($data);
+            return response()->json($usuario);
+        } catch (\Illuminate\Database\QueryException $e) {
+            Log::error('usuariosUpdate DB error: ' . $e->getMessage());
+            return response()->json(['message' => 'Error al actualizar usuario', 'error' => $e->getMessage()], 500);
+        } catch (\Throwable $e) {
+            Log::error('usuariosUpdate error: ' . $e->getMessage());
+            return response()->json(['message' => 'Error al actualizar usuario', 'error' => $e->getMessage()], 500);
+        }
     }
 
     // Eliminar usuario
